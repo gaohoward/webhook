@@ -44,10 +44,6 @@ func main() {
 	}
 }
 
-// type mutatingImageFunc func(v1.AdmissionReview) *v1.AdmissionResponse {
-
-// }
-
 func admitHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("---in http validate handler...")
@@ -103,11 +99,26 @@ func handleAdmission(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResp
 		}
 	}
 
-	log.Println("get pod")
-
 	var pod corev1.Pod
 	if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
 		return toAdmissionResponseError("could not decode pod object: " + err.Error())
+	}
+
+	log.Printf("caught pod %s in namespace %s with images", pod.Name, pod.Namespace)
+	allContainers := make([]*corev1.Container, 0)
+	if len(pod.Spec.Containers) > 0 {
+		for _, c := range pod.Spec.Containers {
+			allContainers = append(allContainers, &c)
+		}
+	}
+	if len(pod.Spec.InitContainers) > 0 {
+		for _, c := range pod.Spec.InitContainers {
+			allContainers = append(allContainers, &c)
+		}
+	}
+
+	for _, c := range allContainers {
+		log.Printf("Pod %s/%s container %s with image %s", pod.Name, pod.Namespace, c.Name, c.Image)
 	}
 	return &admissionv1.AdmissionResponse{
 		Allowed: true,
