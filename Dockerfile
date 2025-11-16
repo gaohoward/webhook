@@ -23,4 +23,4 @@ COPY certs /test/
 EXPOSE 8443
 
 # Run
-CMD ["/test/webhook --tls-cert /test/certs/tls.crt --tls-key /test/certs/tls.key"]
+CMD ["/test/webhook --tls-cert /test/tls.crt --tls-key /test/tls.key"]
