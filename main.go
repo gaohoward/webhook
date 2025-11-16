@@ -10,6 +10,7 @@ import (
 
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -66,7 +67,13 @@ func admitHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp := handleAdmission(&reviewReq)
 
+	// admission.k8s.io/v1, Kind=AdmissionReview, got /, Kind="
+
 	reviewResp := admissionv1.AdmissionReview{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "AdmissionReview",
+			APIVersion: "admission.k8s.io/v1",
+		},
 		Response: resp,
 	}
 	// must copy UID from request to response
