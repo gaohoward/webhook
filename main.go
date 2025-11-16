@@ -19,6 +19,9 @@ var (
 	port     int
 )
 
+// imageUrl : podName/Namespace/containerName
+var imagesMap = make(map[string][]string)
+
 func init() {
 	flag.StringVar(&certFile, "tls-cert", "/etc/webhooks/cdi-images-validator-certs/tls.crt", "TLS certificate file")
 	flag.StringVar(&keyFile, "tls-key", "/etc/webhooks/cdi-images-validator-certs/tls.key", "TLS key file")
@@ -28,6 +31,13 @@ func init() {
 
 func main() {
 	http.HandleFunc("/validate-images", admitHandler)
+	http.HandleFunc("/dump-images", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(imagesMap); err != nil {
+			http.Error(w, "failed to encode images map", http.StatusInternalServerError)
+			return
+		}
+	})
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = io.WriteString(w, "ok")
@@ -47,7 +57,6 @@ func main() {
 
 func admitHandler(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("---in http validate handler...")
 	if r.Method != http.MethodPost {
 		http.Error(w, "only POST allowed", http.StatusMethodNotAllowed)
 		return
@@ -97,7 +106,6 @@ func handleAdmission(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResp
 	if req == nil {
 		return toAdmissionResponseError("empty request")
 	}
-	log.Printf("---in handle admission kind: %v and op: %v", req.Kind.Kind, req.Operation)
 
 	// Only mutate Pods on CREATE
 	if req.Kind.Kind != "Pod" || req.Operation != admissionv1.Create {
@@ -125,6 +133,11 @@ func handleAdmission(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResp
 	}
 
 	for _, c := range allContainers {
+		key := c.Image
+		if _, exists := imagesMap[key]; !exists {
+			imagesMap[key] = make([]string, 0)
+		}
+		imagesMap[key] = append(imagesMap[key], fmt.Sprintf("%s/%s/%s", pod.Namespace, pod.Name, c.Name))
 		log.Printf("Pod %s/%s container %s with image %s", pod.Name, pod.Namespace, c.Name, c.Image)
 	}
 	return &admissionv1.AdmissionResponse{
