@@ -119,7 +119,7 @@ func handleAdmission(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResp
 		return toAdmissionResponseError("could not decode pod object: " + err.Error())
 	}
 
-	log.Printf("caught pod %s in namespace %s with images", pod.Name, pod.Namespace)
+	// log.Printf("caught pod %s in namespace %s with images", pod.Name, pod.Namespace)
 	allContainers := make([]*corev1.Container, 0)
 	if len(pod.Spec.Containers) > 0 {
 		for _, c := range pod.Spec.Containers {
