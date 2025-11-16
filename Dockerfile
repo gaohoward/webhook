@@ -10,12 +10,8 @@ COPY go.mod go.sum ./
 # https://docs.docker.com/reference/dockerfile/#copy
 COPY *.go ./
 
-RUN env | grep -i _PROXY
-
-ARG HTTP_PROXY
-
 # Build
-RUN http_proxy=${HTTP_PROXY} https_proxy=${HTTP_PROXY} CGO_ENABLED=0 GOOS=linux go build -o /test/webhook
+RUN CGO_ENABLED=0 GOOS=linux go build -o /test/webhook
 
 COPY certs /test/
 
