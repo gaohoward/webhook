@@ -48,7 +48,7 @@ func main() {
 	})
 
 	addr := fmt.Sprintf(":%d", port)
-	log.Printf("starting mutating webhook server on %s", addr)
+	log.Printf("starting validating webhook server (image collection) on %s", addr)
 	err := http.ListenAndServeTLS(addr, certFile, keyFile, nil)
 	if err != nil {
 		log.Fatalf("failed to start server: %v", err)
