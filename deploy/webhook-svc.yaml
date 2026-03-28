@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdi-images-caching-svc
+  labels:
+    app: cdi-images-caching-svc
+  namespace: image-webhook
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: cdi-images-caching-svc

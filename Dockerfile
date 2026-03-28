@@ -1,4 +1,4 @@
-FROM golang:1.24
+FROM golang:1.25 AS build-stage
 
 WORKDIR /app
 
@@ -15,6 +15,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /test/webhook
 
 COPY certs /test/
 
+FROM gcr.io/distroless/base-debian11 AS build-release-stage
+
+WORKDIR /
+
+COPY --from=build-stage /test/webhook /webhook
+COPY --from=build-stage /test/webhook.crt /certs/webhook.crt
+COPY --from=build-stage /test/webhook.key /certs/webhook.key
+
 # Optional:
 # To bind to a TCP port, runtime parameters must be supplied to the docker command.
 # But we can document in the Dockerfile what ports
@@ -23,4 +31,4 @@ COPY certs /test/
 EXPOSE 8443
 
 # Run
-CMD ["/test/webhook", "--tls-cert", "/test/webhook.crt", "--tls-key", "/test/webhook.key"]
+CMD ["/webhook", "--tls-cert", "/certs/webhook.crt", "--tls-key", "/certs/webhook.key"]
